@@ -32,10 +32,6 @@ export default {
           DEFAULT: "hsl(var(--accent))",
           foreground: "hsl(var(--accent-foreground))",
         },
-        popover: {
-          DEFAULT: "hsl(var(--popover))",
-          foreground: "hsl(var(--popover-foreground))",
-        },
         card: {
           DEFAULT: "hsl(var(--card))",
           foreground: "hsl(var(--card-foreground))",
@@ -44,16 +40,48 @@ export default {
           green: "hsl(var(--risk-green))",
           amber: "hsl(var(--risk-amber))",
           red: "hsl(var(--risk-red))",
-        }
+        },
+        qvac: {
+          cyan: "hsl(var(--qvac-cyan))",
+        },
+        gold: {
+          DEFAULT: "hsl(var(--secondary))",
+          light: "hsl(38 75% 70%)",
+          dark: "hsl(35 65% 35%)",
+        },
       },
       fontFamily: {
         sans: ['"Plus Jakarta Sans"', 'sans-serif'],
         display: ['"Cabinet Grotesk"', 'sans-serif'],
+        mono: ['"JetBrains Mono"', 'monospace'],
       },
       borderRadius: {
         lg: "var(--radius)",
         md: "calc(var(--radius) - 2px)",
         sm: "calc(var(--radius) - 4px)",
+      },
+      boxShadow: {
+        'glow-primary': '0 0 40px -10px hsl(160 70% 14% / 0.3)',
+        'glow-gold': '0 0 30px -8px hsl(35 45% 62% / 0.4)',
+      },
+      keyframes: {
+        shimmer: {
+          '0%': { backgroundPosition: '-200% 0' },
+          '100%': { backgroundPosition: '200% 0' },
+        },
+        fadeUp: {
+          '0%': { opacity: '0', transform: 'translateY(16px)' },
+          '100%': { opacity: '1', transform: 'translateY(0)' },
+        },
+        pulse2: {
+          '0%, 100%': { opacity: '1' },
+          '50%': { opacity: '0.5' },
+        }
+      },
+      animation: {
+        shimmer: 'shimmer 2.5s linear infinite',
+        'fade-up': 'fadeUp 0.5s ease forwards',
+        'pulse2': 'pulse2 2s ease-in-out infinite',
       },
     },
   },

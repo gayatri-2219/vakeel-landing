@@ -1,165 +1,461 @@
-import { useState } from 'react';
 import { motion } from 'framer-motion';
 import { Link } from 'react-router-dom';
-import { Upload, FileText, ChevronRight, Lock, Clock, ShieldAlert, CheckCircle2 } from 'lucide-react';
+import {
+  Shield, Clock, Banknote, ScanLine, Vault, Landmark, Store,
+  ChevronRight, Lock, Cpu, Wifi, CheckCircle2, AlertTriangle, Zap, FileText,
+  ArrowRight, Globe, Server
+} from 'lucide-react';
 import RiskBadge from '../components/RiskBadge';
+import QvacBadge from '../components/QvacBadge';
+import { VakeelLogo } from '../components/Logo';
+
+const fadeUp = (delay = 0) => ({
+  initial: { opacity: 0, y: 24 },
+  animate: { opacity: 1, y: 0 },
+  transition: { duration: 0.55, delay, ease: [0.19, 1, 0.22, 1] },
+});
+
+const FEATURES = [
+  {
+    icon: Shield,
+    number: '01',
+    title: 'Trust Score for People & Businesses',
+    description: 'Verifies who you are signing with — not just what you are signing. Cross-references GST, PAN, MCA21, and consumer complaint databases for a green/amber/red trust verdict.',
+    tag: 'Trust Engine',
+  },
+  {
+    icon: Clock,
+    number: '02',
+    title: 'Hidden Deadline Detection',
+    description: 'Auto-extracted dates, notice periods, auto-renewal triggers, and compliance deadlines turned into calendar alerts. Never miss the "30 days before auto-lock-in" window again.',
+    tag: 'Deadline Engine',
+  },
+  {
+    icon: Banknote,
+    number: '03',
+    title: 'Consequences in Money',
+    description: 'Not legal jargon — financial impact you actually care about. "You lose ₹1,00,000 deposit if you leave before 11 months," not "clause 8 governs liquidated damages."',
+    tag: 'Risk Engine',
+  },
+  {
+    icon: ScanLine,
+    number: '04',
+    title: 'Fraud Pattern Detection',
+    description: 'Missing annexures, blank pages, contradictory clauses, unbounded variable amounts, forged signature patterns — caught automatically before you sign.',
+    tag: 'Fraud Engine',
+  },
+  {
+    icon: Vault,
+    number: '05',
+    title: 'Personal Document Vault',
+    description: 'Google Photos for legal documents. Search across everything you have ever signed. Embeddings stored in a local SQLite file — vakeel.db — that never leaves your device.',
+    tag: 'Vector Vault',
+  },
+  {
+    icon: Landmark,
+    number: '06',
+    title: 'Rights Engine + Government Schemes',
+    description: 'Based on who you are, not just what the document says. PM-Kisan, PMFBY, MUDRA, ESIC, eShram — surfaced automatically against your profile.',
+    tag: 'Rights Engine',
+  },
+  {
+    icon: Store,
+    number: '07',
+    title: 'Counterparty Verification',
+    description: 'Scan a GST number, PAN, company name, or QR code. Instantly check against public registries. Get a trust verdict before handing over a single rupee.',
+    tag: 'Verify Engine',
+  },
+];
+
+const PERSONAS = [
+  {
+    title: 'The Salaried Middle Class',
+    context: 'Home Loan Agreement + Salary Slips',
+    checks: ['Prepayment penalty trap', 'Missed 80C/80D deductions', 'Tax regime mismatch', 'EMI-to-income ratio'],
+    verdict: 'Your HDFC home loan has a 2% prepayment penalty hidden in Clause 14.2. Switching to SBI now costs ₹40,000 in penalties. Wait 8 months.',
+    risk: 'amber' as const,
+    link: '/analyze/tax-loan',
+    model: 'LLAMA_3_2_1B_INST_Q4_0',
+  },
+  {
+    title: 'The Land Buyer / Farmer',
+    context: 'Title Deed + Mutation Records (Patta)',
+    checks: ['Ownership chain breaks', 'Fake POA patterns', 'Encumbrance detection', 'Land classification check'],
+    verdict: "Title has an unresolved mutation from 2014. Seller's sister hasn't signed a relinquishment deed. Extreme litigation risk — do not pay advance.",
+    risk: 'red' as const,
+    link: '/analyze/land-title',
+    model: 'LLAMA_3_2_11B_VISION_INSTRUCT',
+  },
+  {
+    title: 'The Remote Worker',
+    context: 'Employment Contract + FEMA Records',
+    checks: ['Double-taxation treaty', 'FEMA compliance', 'Contractor misclassification', 'Permanent establishment risk'],
+    verdict: 'Contract says "Independent Contractor" but mandates fixed 9-5 IST hours under one employer. This breaches Indian labor law. Ask for a Consultant Addendum.',
+    risk: 'amber' as const,
+    link: '/analyze/cross-border-tax',
+    model: 'LLAMA_3_2_1B_INST_Q4_0',
+  },
+  {
+    title: 'The Freelancer',
+    context: 'Client Contract + Payment Proofs',
+    checks: ['Forged signature patterns', 'Missing payment milestones', 'IP transfer overreach', 'Jurisdiction trap'],
+    verdict: "CIN U72900KA2021PTC145xxx listed in the preamble is invalid on MCA21. Dispute resolution set to Delaware, USA. High forgery risk — do not start work.",
+    risk: 'red' as const,
+    link: '/analyze/contract-verify',
+    model: 'LLAMA_3_2_1B_INST_Q4_0',
+  },
+];
+
+const QVAC_MODELS = [
+  { name: 'LLAMA_3_2_1B_INST_Q4_0', role: 'Classification + Decision Engine', speed: '< 2s TTFT', note: 'TurboQuant KV-cache' },
+  { name: 'LLAMA_3_2_11B_VISION_INSTRUCT', role: 'OCR for scanned docs & photos', speed: '8–15s/page', note: 'Vulkan GPU accelerated' },
+  { name: 'NOMIC_EMBED_TEXT_V1_5_Q8_0', role: 'Vault semantic search', speed: '< 50ms/chunk', note: 'SQLite vector store' },
+  { name: 'WHISPER_TINY + VAD_SILERO', role: 'Voice input pipeline', speed: 'Real-time', note: 'Full offline round-trip' },
+];
+
+const COMPARISON = [
+  { feature: 'Works offline, no internet', vakeel: true, edge: false, notebook: false },
+  { feature: 'Documents stay on your device', vakeel: true, edge: false, notebook: false },
+  { feature: 'No account required', vakeel: true, edge: false, notebook: false },
+  { feature: 'Indian language support (10)', vakeel: true, edge: false, notebook: false },
+  { feature: 'Fraud pattern detection', vakeel: true, edge: false, notebook: false },
+  { feature: 'Deadline alerts & reminders', vakeel: true, edge: false, notebook: false },
+  { feature: 'Government scheme surfacing', vakeel: true, edge: false, notebook: false },
+  { feature: 'Consequences in ₹ terms', vakeel: true, edge: false, notebook: false },
+];
 
 export default function Landing() {
   return (
     <div className="flex flex-col min-h-screen">
-      {/* Hero Section */}
-      <section className="pt-24 pb-32 px-4 relative overflow-hidden">
-        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top_right,_var(--tw-gradient-stops))] from-primary/10 via-background to-background -z-10" />
-        <div className="container mx-auto max-w-6xl">
-          <div className="max-w-3xl">
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.5 }}
-              className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-primary/5 text-primary text-sm font-semibold mb-6 border border-primary/10"
-            >
-              <Lock className="w-4 h-4" />
-              100% Local Processing. Documents never leave your device.
+
+      {/* ── HERO ──────────────────────────────────────────────── */}
+      <section className="hero-gradient noise-texture relative overflow-hidden">
+        <div className="absolute inset-0 z-0">
+          <div className="absolute top-1/4 right-1/4 w-96 h-96 rounded-full bg-white/3 blur-3xl" />
+          <div className="absolute bottom-0 left-1/3 w-64 h-64 rounded-full bg-secondary/10 blur-3xl" />
+        </div>
+
+        <div className="container mx-auto max-w-7xl px-4 pt-20 pb-28 relative z-10">
+          <div className="max-w-4xl">
+            {/* QVAC / offline pill */}
+            <motion.div {...fadeUp(0)} className="flex flex-wrap items-center gap-3 mb-8">
+              <span className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-white/10 border border-white/15 text-white/90 text-xs font-mono">
+                <Cpu className="w-3.5 h-3.5 text-secondary" />
+                Powered by @qvac/sdk · TurboQuant + Vulkan
+              </span>
+              <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-white/10 border border-white/15 text-white/90 text-xs font-mono">
+                <Wifi className="w-3.5 h-3.5 line-through opacity-50" />
+                100% offline · No data leaves your device
+              </span>
             </motion.div>
+
             <motion.h1
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.5, delay: 0.1 }}
-              className="text-5xl md:text-7xl font-display font-extrabold leading-[1.1] tracking-tight mb-6 text-foreground"
+              {...fadeUp(0.08)}
+              className="text-5xl sm:text-6xl md:text-7xl font-display font-black text-white leading-[1.05] tracking-tight mb-6"
             >
               Before you sign,<br />
-              <span className="text-primary">know what it costs.</span>
+              <span className="text-gradient-gold">know what it costs.</span>
             </motion.h1>
-            <motion.p
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.5, delay: 0.2 }}
-              className="text-xl text-muted-foreground mb-10 max-w-2xl leading-relaxed"
-            >
-              VaultAI is your private legal risk engine. Upload your property deeds, loan agreements, or employment contracts. In 30 seconds, our local AI flags hidden traps that could cost you lakhs.
+
+            <motion.p {...fadeUp(0.16)} className="text-lg md:text-xl text-white/70 max-w-2xl leading-relaxed mb-10">
+              VAKEEL is a privacy-first, on-device legal intelligence engine. Upload your property deeds, loan agreements, or employment contracts. In 30 seconds, local AI flags hidden traps — consequences in rupees, not legalese.
             </motion.p>
+
+            <motion.div {...fadeUp(0.24)} className="flex flex-col sm:flex-row items-start gap-4">
+              <Link
+                to="/analyze/tax-loan"
+                className="group inline-flex items-center gap-2 px-8 py-4 bg-white text-foreground rounded-xl font-bold text-base hover:bg-white/95 transition-all shadow-lg shadow-black/20 hover:-translate-y-0.5"
+              >
+                Run Demo Scan
+                <ChevronRight className="w-4 h-4 transition-transform group-hover:translate-x-1" />
+              </Link>
+              <Link
+                to="/vault"
+                className="inline-flex items-center gap-2 px-8 py-4 bg-white/10 border border-white/20 text-white rounded-xl font-semibold text-base hover:bg-white/15 transition-all"
+              >
+                <Lock className="w-4 h-4" />
+                Open My Vault
+              </Link>
+            </motion.div>
+          </div>
+        </div>
+
+        {/* Stats bar */}
+        <div className="relative z-10 border-t border-white/10 bg-black/20 backdrop-blur-sm">
+          <div className="container mx-auto max-w-7xl px-4">
+            <div className="grid grid-cols-2 md:grid-cols-4 divide-x divide-white/10">
+              {[
+                { val: '30s', label: 'Full document scan' },
+                { val: '0 bytes', label: 'Sent to any server' },
+                { val: '19', label: 'Languages supported' },
+                { val: '7', label: 'AI sub-engines' },
+              ].map((s) => (
+                <div key={s.val} className="py-6 px-6 text-center">
+                  <div className="text-2xl md:text-3xl font-display font-black text-white mb-1">{s.val}</div>
+                  <div className="text-xs text-white/50 font-medium">{s.label}</div>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* ── 7 FEATURES ───────────────────────────────────────── */}
+      <section className="py-24 px-4 bg-background">
+        <div className="container mx-auto max-w-7xl">
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            transition={{ duration: 0.5 }}
+            className="max-w-2xl mb-16"
+          >
+            <span className="text-xs font-mono font-bold text-primary/60 uppercase tracking-widest mb-3 block">Seven engines. One verdict.</span>
+            <h2 className="text-4xl md:text-5xl font-display font-black text-foreground mb-4">
+              Everything a lawyer checks.<br />In 30 seconds. Offline.
+            </h2>
+            <p className="text-lg text-muted-foreground">VAKEEL runs seven specialized AI sub-engines in sequence for every document — all powered by QVAC models running on your own hardware.</p>
+          </motion.div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+            {FEATURES.map((f, i) => {
+              const Icon = f.icon;
+              return (
+                <motion.div
+                  key={f.number}
+                  initial={{ opacity: 0, y: 24 }}
+                  whileInView={{ opacity: 1, y: 0 }}
+                  viewport={{ once: true }}
+                  transition={{ duration: 0.45, delay: i * 0.06 }}
+                  className="group bg-card border border-border rounded-2xl p-6 card-hover relative overflow-hidden"
+                >
+                  <div className="absolute top-4 right-4 text-[3rem] font-display font-black text-muted/30 leading-none select-none">
+                    {f.number}
+                  </div>
+                  <div className="bg-primary/10 w-11 h-11 rounded-xl flex items-center justify-center mb-5">
+                    <Icon className="w-5 h-5 text-primary" />
+                  </div>
+                  <span className="text-[10px] font-mono font-bold text-secondary uppercase tracking-widest mb-2 block">{f.tag}</span>
+                  <h3 className="text-lg font-display font-bold text-foreground mb-2.5">{f.title}</h3>
+                  <p className="text-sm text-muted-foreground leading-relaxed">{f.description}</p>
+                </motion.div>
+              );
+            })}
+          </div>
+        </div>
+      </section>
+
+      {/* ── PERSONA USE CASES ────────────────────────────────── */}
+      <section className="py-24 px-4 bg-muted/30 border-y border-border">
+        <div className="container mx-auto max-w-7xl">
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            className="text-center max-w-2xl mx-auto mb-16"
+          >
+            <span className="text-xs font-mono font-bold text-primary/60 uppercase tracking-widest mb-3 block">Interactive demos</span>
+            <h2 className="text-4xl md:text-5xl font-display font-black text-foreground mb-4">What's hiding in your paperwork?</h2>
+            <p className="text-lg text-muted-foreground">Select a persona to run a live demo with real QVAC inference — watch each analysis step animate in real-time.</p>
+          </motion.div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            {PERSONAS.map((p, i) => (
+              <motion.div
+                key={p.link}
+                initial={{ opacity: 0, y: 24 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true }}
+                transition={{ duration: 0.45, delay: i * 0.08 }}
+              >
+                <Link to={p.link} className="block group">
+                  <div className="bg-card border border-border rounded-2xl p-7 h-full card-hover relative overflow-hidden">
+                    {/* Top accent line */}
+                    <div className={`absolute top-0 left-0 right-0 h-0.5 ${
+                      p.risk === 'red' ? 'bg-risk-red' : p.risk === 'amber' ? 'bg-risk-amber' : 'bg-risk-green'
+                    }`} />
+
+                    <div className="flex items-start justify-between mb-5">
+                      <div>
+                        <h3 className="text-xl font-display font-bold text-foreground mb-1">{p.title}</h3>
+                        <p className="text-xs text-muted-foreground flex items-center gap-1.5">
+                          <FileText className="w-3.5 h-3.5" /> {p.context}
+                        </p>
+                      </div>
+                      <RiskBadge level={p.risk} size="md" />
+                    </div>
+
+                    <div className="mb-5">
+                      <p className="text-[10px] font-mono font-bold text-muted-foreground uppercase tracking-widest mb-2.5">VAKEEL checks</p>
+                      <ul className="space-y-1.5">
+                        {p.checks.map((check) => (
+                          <li key={check} className="flex items-center gap-2 text-sm text-foreground/80">
+                            <CheckCircle2 className="w-3.5 h-3.5 text-primary/50 shrink-0" />
+                            {check}
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+
+                    <div className={`rounded-xl p-4 border mb-4 ${
+                      p.risk === 'red' ? 'bg-risk-red/5 border-risk-red/15' :
+                      p.risk === 'amber' ? 'bg-risk-amber/5 border-risk-amber/15' :
+                      'bg-risk-green/5 border-risk-green/15'
+                    }`}>
+                      <p className="text-sm font-semibold text-foreground leading-snug">{p.verdict}</p>
+                    </div>
+
+                    <div className="flex items-center justify-between">
+                      <QvacBadge model={p.model} compact />
+                      <span className="flex items-center gap-1 text-sm font-bold text-primary group-hover:translate-x-1 transition-transform">
+                        Run Demo <ArrowRight className="w-4 h-4" />
+                      </span>
+                    </div>
+                  </div>
+                </Link>
+              </motion.div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* ── QVAC CAPABILITIES ────────────────────────────────── */}
+      <section className="py-24 px-4 bg-background">
+        <div className="container mx-auto max-w-7xl">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-16 items-center">
             <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.5, delay: 0.3 }}
-              className="flex flex-col sm:flex-row items-center gap-4"
+              initial={{ opacity: 0, x: -24 }}
+              whileInView={{ opacity: 1, x: 0 }}
+              viewport={{ once: true }}
+              transition={{ duration: 0.55 }}
             >
-              <Link to="/vault" className="w-full sm:w-auto px-8 py-4 bg-primary text-primary-foreground rounded-lg font-bold text-lg hover:bg-primary/90 transition-all flex items-center justify-center gap-2 shadow-lg shadow-primary/20 hover:shadow-xl hover:-translate-y-0.5">
-                <Upload className="w-5 h-5" />
-                Upload a Document
+              <span className="text-xs font-mono font-bold text-primary/60 uppercase tracking-widest mb-3 block">Built on QVAC SDK</span>
+              <h2 className="text-4xl font-display font-black text-foreground mb-4">
+                Every inference call runs on your device.
+              </h2>
+              <p className="text-muted-foreground mb-6 leading-relaxed">
+                VAKEEL uses <code className="font-mono text-sm bg-muted px-1.5 py-0.5 rounded">@qvac/sdk</code> — Tether's local-first AI platform. TurboQuant KV-cache quantization and Vulkan GPU acceleration ensure fast inference even on mid-range hardware. Zero cloud API calls. Zero data leaks.
+              </p>
+              <ul className="space-y-3 mb-8">
+                {[
+                  'TurboQuant KV-cache quantization for 2–4x faster inference',
+                  'Vulkan GPU acceleration (NVIDIA / AMD / Intel / Apple Silicon)',
+                  'Sequential model loading on 8 GB RAM devices',
+                  'SQLite vector store — your embeddings, your disk',
+                  'Fully reproducible — same results, offline, forever',
+                ].map((item) => (
+                  <li key={item} className="flex items-start gap-2.5 text-sm text-foreground/80">
+                    <Zap className="w-4 h-4 text-secondary shrink-0 mt-0.5" />
+                    {item}
+                  </li>
+                ))}
+              </ul>
+              <Link to="/how-it-works" className="inline-flex items-center gap-2 text-sm font-bold text-primary hover:underline">
+                See the full architecture <ArrowRight className="w-4 h-4" />
               </Link>
-              <Link to="/how-it-works" className="w-full sm:w-auto px-8 py-4 bg-white text-foreground border border-border rounded-lg font-bold text-lg hover:bg-muted transition-all flex items-center justify-center gap-2">
-                See How It Works
-              </Link>
+            </motion.div>
+
+            <motion.div
+              initial={{ opacity: 0, x: 24 }}
+              whileInView={{ opacity: 1, x: 0 }}
+              viewport={{ once: true }}
+              transition={{ duration: 0.55 }}
+              className="space-y-3"
+            >
+              {QVAC_MODELS.map((m) => (
+                <div key={m.name} className="bg-card border border-border rounded-xl p-5 flex items-start gap-4">
+                  <div className="bg-primary/10 p-2 rounded-lg shrink-0">
+                    <Cpu className="w-5 h-5 text-primary" />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <div className="font-mono text-xs font-bold text-foreground mb-0.5 truncate">{m.name}</div>
+                    <div className="text-sm text-muted-foreground mb-2">{m.role}</div>
+                    <div className="flex items-center gap-3 flex-wrap">
+                      <span className="text-xs bg-muted text-muted-foreground px-2 py-0.5 rounded-full font-mono">{m.speed}</span>
+                      <span className="text-xs text-secondary font-semibold">{m.note}</span>
+                    </div>
+                  </div>
+                </div>
+              ))}
             </motion.div>
           </div>
         </div>
       </section>
 
-      {/* Trust & Stats */}
-      <section className="py-12 border-y border-border/50 bg-white/50">
-        <div className="container mx-auto px-4 max-w-6xl">
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8 text-center divide-y md:divide-y-0 md:divide-x divide-border">
-            <div className="p-4">
-              <div className="text-4xl font-display font-bold text-primary mb-2">30s</div>
-              <div className="text-sm text-muted-foreground font-medium">Average scan time</div>
+      {/* ── COMPARISON TABLE ─────────────────────────────────── */}
+      <section className="py-24 px-4 bg-muted/30 border-y border-border">
+        <div className="container mx-auto max-w-5xl">
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            className="text-center mb-14"
+          >
+            <h2 className="text-4xl font-display font-black mb-4">VAKEEL vs. the cloud alternatives</h2>
+            <p className="text-muted-foreground">Edge Copilot, NotebookLM, and Mapify require internet and upload your most sensitive documents to the cloud. VAKEEL doesn't.</p>
+          </motion.div>
+
+          <div className="bg-card border border-border rounded-2xl overflow-hidden shadow-sm">
+            <div className="grid grid-cols-4 bg-muted/50 border-b border-border text-xs font-bold uppercase tracking-wider text-muted-foreground">
+              <div className="col-span-2 p-4">Feature</div>
+              <div className="p-4 text-center text-primary">VAKEEL</div>
+              <div className="p-4 text-center">Cloud Tools</div>
             </div>
-            <div className="p-4">
-              <div className="text-4xl font-display font-bold text-primary mb-2">₹0</div>
-              <div className="text-sm text-muted-foreground font-medium">Data sent to servers (Fully Local)</div>
-            </div>
-            <div className="p-4">
-              <div className="text-4xl font-display font-bold text-primary mb-2">5,000+</div>
-              <div className="text-sm text-muted-foreground font-medium">Legal patterns recognized</div>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* Personas Section */}
-      <section className="py-24 px-4 bg-background">
-        <div className="container mx-auto max-w-6xl">
-          <div className="text-center max-w-2xl mx-auto mb-16">
-            <h2 className="text-3xl md:text-4xl font-display font-bold mb-4">What's hiding in your paperwork?</h2>
-            <p className="text-lg text-muted-foreground">Select a scenario to see how VaultAI analyzes complex documents in seconds.</p>
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-            <PersonaCard
-              title="The Middle Class Salaried"
-              context="Home Loan Agreement & Salary Slips"
-              checks={['Hidden charges', 'Missed 80C deductions', 'Tax regime comparison']}
-              verdict="Your home loan has a 2% prepayment penalty. Switching to SBI now will cost ₹40,000 in penalties. Wait 8 months."
-              risk="amber"
-              link="/analyze/tax-loan"
-            />
-            <PersonaCard
-              title="The Land Buyer"
-              context="Title Deed & Mutation Records (Patta)"
-              checks={['Ownership chain breaks', 'Fake POA patterns', 'Encumbrances']}
-              verdict="Title has an unresolved mutation from 2014. The seller's sister hasn't relinquished rights. Do not sign the sale agreement."
-              risk="red"
-              link="/analyze/land-title"
-            />
-            <PersonaCard
-              title="The Remote Worker"
-              context="Employment Contract & FEMA"
-              checks={['Double taxation', 'FEMA compliance', 'Misclassification']}
-              verdict="You are classified as an 'Independent Contractor' but mandated to work fixed IST hours. This breaches Indian labor law. Ask for a Consultant Addendum."
-              risk="amber"
-              link="/analyze/cross-border-tax"
-            />
-            <PersonaCard
-              title="The Freelancer"
-              context="Client Contract"
-              checks={['Forged signatures', 'Milestone traps', 'IP overreach']}
-              verdict="Company registration number (CIN) in the contract does not match MCA public records. High forgery risk. Do not commence work."
-              risk="red"
-              link="/analyze/contract-verify"
-            />
-          </div>
-        </div>
-      </section>
-    </div>
-  );
-}
-
-function PersonaCard({ title, context, checks, verdict, risk, link }: { title: string, context: string, checks: string[], verdict: string, risk: 'green'|'amber'|'red', link: string }) {
-  return (
-    <Link to={link} className="block group">
-      <div className="bg-card border border-border rounded-xl p-8 h-full shadow-sm hover:shadow-md transition-all relative overflow-hidden">
-        <div className="absolute top-0 right-0 w-32 h-32 bg-primary/5 rounded-bl-full -mr-16 -mt-16 transition-transform group-hover:scale-110" />
-        
-        <div className="mb-6">
-          <h3 className="text-xl font-display font-bold text-foreground mb-1">{title}</h3>
-          <p className="text-sm text-muted-foreground flex items-center gap-2">
-            <FileText className="w-4 h-4" /> {context}
-          </p>
-        </div>
-
-        <div className="mb-6 space-y-2">
-          <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">AI Checks</p>
-          <ul className="text-sm space-y-1">
-            {checks.map((check, i) => (
-              <li key={i} className="flex items-center gap-2 text-foreground/80">
-                <CheckCircle2 className="w-3.5 h-3.5 text-primary/60" /> {check}
-              </li>
+            {COMPARISON.map((row, i) => (
+              <div key={row.feature} className={`grid grid-cols-4 border-b border-border last:border-0 ${i % 2 === 0 ? '' : 'bg-muted/20'}`}>
+                <div className="col-span-2 p-4 text-sm font-medium text-foreground">{row.feature}</div>
+                <div className="p-4 flex justify-center">
+                  <CheckCircle2 className="w-5 h-5 text-risk-green" />
+                </div>
+                <div className="p-4 flex justify-center">
+                  <span className="text-risk-red font-bold text-lg leading-none">×</span>
+                </div>
+              </div>
             ))}
-          </ul>
-        </div>
-
-        <div className="bg-muted/50 rounded-lg p-4 border border-border/50">
-          <div className="flex items-center justify-between mb-2">
-            <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Verdict</span>
-            <RiskBadge level={risk} />
           </div>
-          <p className="text-sm font-medium text-foreground leading-snug">{verdict}</p>
         </div>
+      </section>
 
-        <div className="mt-6 flex items-center justify-end text-sm font-semibold text-primary group-hover:translate-x-1 transition-transform">
-          Run Demo Scan <ChevronRight className="w-4 h-4 ml-1" />
+      {/* ── CTA ──────────────────────────────────────────────── */}
+      <section className="py-24 px-4 bg-background">
+        <div className="container mx-auto max-w-4xl text-center">
+          <motion.div
+            initial={{ opacity: 0, scale: 0.95 }}
+            whileInView={{ opacity: 1, scale: 1 }}
+            viewport={{ once: true }}
+            transition={{ duration: 0.5 }}
+            className="bg-primary rounded-3xl p-12 md:p-16 relative overflow-hidden noise-texture"
+          >
+            <div className="absolute top-0 right-0 w-64 h-64 rounded-full bg-white/5 -translate-y-1/2 translate-x-1/2" />
+            <div className="absolute bottom-0 left-0 w-48 h-48 rounded-full bg-white/5 translate-y-1/2 -translate-x-1/2" />
+
+            <div className="relative z-10">
+              <VakeelLogo className="w-14 h-16 mx-auto mb-6 [&_path:first-child]:fill-white/10 [&_path:first-child]:stroke-white/20 [&_path:not(:first-child)]:stroke-secondary" />
+              <h2 className="text-4xl md:text-5xl font-display font-black text-white mb-4">
+                Your documents.<br />Your device.<br />Your protection.
+              </h2>
+              <p className="text-white/70 max-w-xl mx-auto mb-10 text-lg">
+                A family member was defrauded through a loan document that referenced annexures that didn't exist. VAKEEL was built so this never happens to you.
+              </p>
+              <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
+                <Link
+                  to="/analyze/tax-loan"
+                  className="px-8 py-4 bg-white text-foreground rounded-xl font-bold text-base hover:bg-white/95 transition-all shadow-lg shadow-black/20 hover:-translate-y-0.5 inline-flex items-center gap-2"
+                >
+                  Try the Demo <ArrowRight className="w-4 h-4" />
+                </Link>
+                <Link
+                  to="/vault"
+                  className="px-8 py-4 bg-white/10 border border-white/20 text-white rounded-xl font-semibold text-base hover:bg-white/15 transition-all inline-flex items-center gap-2"
+                >
+                  <Lock className="w-4 h-4" /> Open My Vault
+                </Link>
+              </div>
+            </div>
+          </motion.div>
         </div>
-      </div>
-    </Link>
+      </section>
+
+    </div>
   );
 }
