@@ -2,7 +2,7 @@ import { motion } from 'framer-motion';
 import { Link } from 'react-router-dom';
 import {
   Shield, Clock, Banknote, ScanLine, Vault, Landmark, Store,
-  ChevronRight, Lock, Cpu, Wifi, CheckCircle2, AlertTriangle, Zap, FileText,
+  ChevronRight, Lock, Cpu, Wifi, CheckCircle2, CheckCircle, AlertTriangle, Zap, FileText,
   ArrowRight, Globe, Server
 } from 'lucide-react';
 import RiskBadge from '../components/RiskBadge';
@@ -130,53 +130,164 @@ export default function Landing() {
 
       {/* ── HERO ──────────────────────────────────────────────── */}
       <section className="hero-gradient noise-texture relative overflow-hidden">
+        <style>{`
+          @keyframes vakeel-scan {
+            0% { transform: translateY(0); opacity: 0; }
+            10% { opacity: 1; }
+            90% { opacity: 1; }
+            100% { transform: translateY(96px); opacity: 0; }
+          }
+          @keyframes vakeel-progress {
+            0% { width: 0%; }
+            100% { width: 100%; }
+          }
+          @keyframes vakeel-row1 {
+            0% { opacity: 0; transform: translateY(8px); }
+            100% { opacity: 1; transform: translateY(0); }
+          }
+          .vakeel-scan { animation: vakeel-scan 2.4s ease-in-out infinite; }
+          .vakeel-progress { animation: vakeel-progress 1.4s ease-out 0.3s forwards; width: 0; }
+          .vakeel-row1 { animation: vakeel-row1 0.4s ease-out 1.6s both; }
+          .vakeel-row2 { animation: vakeel-row1 0.4s ease-out 2.2s both; }
+          .vakeel-row3 { animation: vakeel-row1 0.4s ease-out 2.8s both; }
+        `}</style>
+
         <div className="absolute inset-0 z-0">
           <div className="absolute top-1/4 right-1/4 w-96 h-96 rounded-full bg-white/3 blur-3xl" />
           <div className="absolute bottom-0 left-1/3 w-64 h-64 rounded-full bg-secondary/10 blur-3xl" />
         </div>
 
         <div className="container mx-auto max-w-7xl px-4 pt-20 pb-28 relative z-10">
-          <div className="max-w-4xl">
-            {/* QVAC / offline pill */}
-            <motion.div {...fadeUp(0)} className="flex flex-wrap items-center gap-3 mb-8">
-              <span className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-white/10 border border-white/15 text-white/90 text-xs font-mono">
-                <Cpu className="w-3.5 h-3.5 text-secondary" />
-                Powered by @qvac/sdk · TurboQuant + Vulkan
-              </span>
-              <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-white/10 border border-white/15 text-white/90 text-xs font-mono">
-                <Wifi className="w-3.5 h-3.5 line-through opacity-50" />
-                100% offline · No data leaves your device
-              </span>
-            </motion.div>
+          <div className="flex flex-col lg:flex-row items-center gap-12 lg:gap-16">
 
-            <motion.h1
-              {...fadeUp(0.08)}
-              className="text-5xl sm:text-6xl md:text-7xl font-display font-black text-white leading-[1.05] tracking-tight mb-6"
+            {/* ── Left: existing copy ── */}
+            <div className="flex-1 min-w-0">
+              {/* QVAC / offline pill */}
+              <motion.div {...fadeUp(0)} className="flex flex-wrap items-center gap-3 mb-8">
+                <span className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-white/10 border border-white/15 text-white/90 text-xs font-mono">
+                  <Cpu className="w-3.5 h-3.5 text-secondary" />
+                  Powered by @qvac/sdk · TurboQuant + Vulkan
+                </span>
+                <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-white/10 border border-white/15 text-white/90 text-xs font-mono">
+                  <Wifi className="w-3.5 h-3.5 line-through opacity-50" />
+                  100% offline · No data leaves your device
+                </span>
+              </motion.div>
+
+              <motion.h1
+                {...fadeUp(0.08)}
+                className="text-5xl sm:text-6xl md:text-7xl font-display font-black text-white leading-[1.05] tracking-tight mb-6"
+              >
+                Before you sign,<br />
+                <span className="text-gradient-gold">know what it costs.</span>
+              </motion.h1>
+
+              <motion.p {...fadeUp(0.16)} className="text-lg md:text-xl text-white/70 max-w-2xl leading-relaxed mb-10">
+                VAKEEL is a privacy-first, on-device legal intelligence engine. Upload your property deeds, loan agreements, or employment contracts. In 30 seconds, local AI flags hidden traps — consequences in rupees, not legalese.
+              </motion.p>
+
+              <motion.div {...fadeUp(0.24)} className="flex flex-col sm:flex-row items-start gap-4">
+                <Link
+                  to="/analyze/tax-loan"
+                  className="group inline-flex items-center gap-2 px-8 py-4 bg-white text-foreground rounded-xl font-bold text-base hover:bg-white/95 transition-all shadow-lg shadow-black/20 hover:-translate-y-0.5"
+                >
+                  Run Demo Scan
+                  <ChevronRight className="w-4 h-4 transition-transform group-hover:translate-x-1" />
+                </Link>
+                <Link
+                  to="/vault"
+                  className="inline-flex items-center gap-2 px-8 py-4 bg-white/10 border border-white/20 text-white rounded-xl font-semibold text-base hover:bg-white/15 transition-all"
+                >
+                  <Lock className="w-4 h-4" />
+                  Open My Vault
+                </Link>
+              </motion.div>
+            </div>
+
+            {/* ── Right: animated analysis card ── */}
+            <motion.div
+              {...fadeUp(0.32)}
+              className="w-full lg:w-[440px] shrink-0 relative"
             >
-              Before you sign,<br />
-              <span className="text-gradient-gold">know what it costs.</span>
-            </motion.h1>
+              {/* Glow behind card */}
+              <div className="absolute inset-0 bg-secondary/20 blur-[80px] rounded-full pointer-events-none" />
 
-            <motion.p {...fadeUp(0.16)} className="text-lg md:text-xl text-white/70 max-w-2xl leading-relaxed mb-10">
-              VAKEEL is a privacy-first, on-device legal intelligence engine. Upload your property deeds, loan agreements, or employment contracts. In 30 seconds, local AI flags hidden traps — consequences in rupees, not legalese.
-            </motion.p>
+              <div className="relative rounded-3xl border border-white/15 bg-white shadow-2xl overflow-hidden flex flex-col gap-6 p-6 sm:p-8">
 
-            <motion.div {...fadeUp(0.24)} className="flex flex-col sm:flex-row items-start gap-4">
-              <Link
-                to="/analyze/tax-loan"
-                className="group inline-flex items-center gap-2 px-8 py-4 bg-white text-foreground rounded-xl font-bold text-base hover:bg-white/95 transition-all shadow-lg shadow-black/20 hover:-translate-y-0.5"
-              >
-                Run Demo Scan
-                <ChevronRight className="w-4 h-4 transition-transform group-hover:translate-x-1" />
-              </Link>
-              <Link
-                to="/vault"
-                className="inline-flex items-center gap-2 px-8 py-4 bg-white/10 border border-white/20 text-white rounded-xl font-semibold text-base hover:bg-white/15 transition-all"
-              >
-                <Lock className="w-4 h-4" />
-                Open My Vault
-              </Link>
+                {/* Card header */}
+                <div className="flex items-center justify-between border-b border-black/5 pb-5">
+                  <div className="flex items-center gap-2.5">
+                    <div className="w-9 h-9 rounded-xl bg-primary flex items-center justify-center shrink-0">
+                      <Shield className="w-4 h-4 text-secondary" />
+                    </div>
+                    <span className="font-display font-bold text-foreground text-base">Document Analysis</span>
+                  </div>
+                  <span className="text-[10px] font-mono font-bold px-2.5 py-1 rounded-md bg-primary/8 text-primary uppercase tracking-wider">
+                    QVAC · Offline
+                  </span>
+                </div>
+
+                {/* Blurred doc skeleton with scanline */}
+                <div className="relative space-y-2.5 p-4 rounded-xl bg-muted/40 border border-border overflow-hidden">
+                  <div className="h-2.5 w-3/4 rounded-full bg-muted" />
+                  <div className="h-2.5 w-full rounded-full bg-muted" />
+                  <div className="h-2.5 w-5/6 rounded-full bg-muted" />
+                  <div className="h-2.5 w-2/3 rounded-full bg-muted" />
+                  <div className="h-2.5 w-4/5 rounded-full bg-muted" />
+                  {/* Scanline */}
+                  <div
+                    className="vakeel-scan absolute left-0 right-0 top-0 h-0.5 bg-gradient-to-r from-transparent via-secondary to-transparent"
+                  />
+                </div>
+
+                {/* Progress */}
+                <div className="space-y-1.5">
+                  <div className="flex justify-between text-xs font-semibold text-muted-foreground">
+                    <span className="font-mono">LLAMA_3_2_1B_INST_Q4_0</span>
+                    <span>Analyzing…</span>
+                  </div>
+                  <div className="h-1.5 w-full bg-muted rounded-full overflow-hidden">
+                    <div className="vakeel-progress h-full bg-primary rounded-full" />
+                  </div>
+                </div>
+
+                {/* Result rows */}
+                <div className="space-y-2.5">
+                  <div className="vakeel-row1 flex items-center justify-between p-3 rounded-xl bg-risk-green/8 border border-risk-green/20">
+                    <span className="text-sm font-semibold text-foreground">Trust Score</span>
+                    <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-risk-green/15 text-risk-green text-xs font-bold">
+                      <CheckCircle className="w-3.5 h-3.5" />
+                      84 / 100
+                    </div>
+                  </div>
+
+                  <div className="vakeel-row2 flex items-center justify-between p-3 rounded-xl bg-risk-amber/8 border border-risk-amber/20">
+                    <span className="text-sm font-semibold text-foreground">Deadline</span>
+                    <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-risk-amber/15 text-risk-amber text-xs font-bold">
+                      <Clock className="w-3.5 h-3.5" />
+                      7 days · Oct 24
+                    </div>
+                  </div>
+
+                  <div className="vakeel-row3 flex items-center justify-between p-3 rounded-xl bg-risk-red/8 border border-risk-red/20">
+                    <span className="text-sm font-semibold text-foreground">Risk Detected</span>
+                    <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-risk-red/15 text-risk-red text-xs font-bold">
+                      <AlertTriangle className="w-3.5 h-3.5" />
+                      Annexure Missing
+                    </div>
+                  </div>
+                </div>
+
+                {/* Footer */}
+                <div className="text-center border-t border-border pt-3">
+                  <span className="text-[10px] font-mono text-muted-foreground">
+                    LLAMA_3_2_1B_INST_Q4_0 · Offline · 847ms
+                  </span>
+                </div>
+
+              </div>
             </motion.div>
+
           </div>
         </div>
 
