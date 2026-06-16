@@ -51,8 +51,8 @@ export default {
         },
       },
       fontFamily: {
-        sans: ['Inter', 'sans-serif'],
-        display: ['"Bricolage Grotesque"', 'sans-serif'],
+        sans: ['"DM Sans"', 'sans-serif'],
+        display: ['"Playfair Display"', 'serif'],
         mono: ['"JetBrains Mono"', 'monospace'],
       },
       borderRadius: {

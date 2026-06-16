@@ -2,9 +2,9 @@ import { useState, useRef, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   MessageSquare, Send, Lock, FileText, ChevronDown, ShieldCheck,
-  Cpu, AlertTriangle, Clock, Banknote, Loader2, User
+  Cpu, Loader2, User
 } from 'lucide-react';
-import { Link } from 'react-router-dom';
+import { Link, useSearchParams } from 'react-router-dom';
 
 interface VaultDoc {
   id: string;
@@ -152,7 +152,11 @@ const SUGGESTED: Record<string, string[]> = {
 };
 
 export default function Chat() {
-  const [selectedDoc, setSelectedDoc] = useState<VaultDoc | null>(null);
+  const [searchParams] = useSearchParams();
+  const preselect = searchParams.get('doc');
+  const [selectedDoc, setSelectedDoc] = useState<VaultDoc | null>(
+    preselect ? (VAULT_DOCS.find((d) => d.id === preselect) ?? null) : null
+  );
   const [dropOpen, setDropOpen] = useState(false);
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState('');
