@@ -1,9 +1,10 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   ShieldCheck, Cpu, FileSearch, CheckCircle2, ArrowRight, Lock, AlertTriangle,
-  Clock, Banknote, Landmark, Download, Calendar, Zap, FileImage
+  Clock, Banknote, Landmark, Download, Calendar, Zap, FileImage,
+  Mic, Check, Loader2, Save, FileText, MessageSquare
 } from 'lucide-react';
 import RiskBadge from '../components/RiskBadge';
 import QvacBadge from '../components/QvacBadge';
@@ -29,6 +30,8 @@ const demos: Record<string, any> = {
     ],
     schemes: ['PMAY credit-linked subsidy (check eligibility)', 'Section 24 deduction on home loan interest'],
     models: ['LLAMA_3_2_1B_INST_Q4_0', 'NOMIC_EMBED_TEXT_V1_5_Q8_0'],
+    voiceQuestion: 'Is the 3-year lock-in clause in my home loan standard under RBI guidelines?',
+    voiceResponse: 'Under RBI Master Circular on Housing Finance, a 3-year lock-in on prepayment is above the standard 12–18 months seen in most PSU bank loans. This clause may trigger a 2–3% penalty of outstanding principal if you refinance early. I recommend negotiating this down to 12 months or requesting a waiver in writing before signing.',
   },
   'land-title': {
     title: 'Land Title & Patta Verification',
@@ -49,6 +52,8 @@ const demos: Record<string, any> = {
     ],
     schemes: ['PMFBY crop insurance (if agricultural land)', 'PM-Kisan eligibility check'],
     models: ['LLAMA_3_2_11B_VISION_INSTRUCT', 'LLAMA_3_2_1B_INST_Q4_0'],
+    voiceQuestion: 'Can a seller transfer land title if one legal heir has not signed?',
+    voiceResponse: 'No. Under the Indian Succession Act and Transfer of Property Act, all legal heirs must consent to and sign the sale deed for the transfer to be valid. A missing heir signature makes the transaction voidable at any time — even years after the sale. You must obtain a registered relinquishment deed from every heir before paying any advance.',
   },
   'cross-border-tax': {
     title: 'Remote Employment Contract Analysis',
@@ -70,6 +75,8 @@ const demos: Record<string, any> = {
     ],
     schemes: ['DTAA India-USA treaty benefits', 'Schedule FA foreign asset reporting (ITR)'],
     models: ['LLAMA_3_2_1B_INST_Q4_0'],
+    voiceQuestion: 'Do I need to pay tax in India on income from a US company?',
+    voiceResponse: 'Yes. As an Indian resident, your global income is taxable in India regardless of where it is earned. However, the India-US DTAA lets you claim a foreign tax credit for taxes paid in the US. File Form 67 with your ITR before the due date. Additionally, if you receive more than ₹7 lakh in foreign remittances annually, you must maintain FEMA compliance records.',
   },
   'contract-verify': {
     title: 'Client Master Service Agreement',
@@ -91,6 +98,8 @@ const demos: Record<string, any> = {
     ],
     schemes: ['MSME SAMADHAAN for unpaid invoice recovery', 'Consumer Forum complaint option'],
     models: ['LLAMA_3_2_1B_INST_Q4_0', 'NOMIC_EMBED_TEXT_V1_5_Q8_0'],
+    voiceQuestion: 'What happens if the company CIN is invalid on MCA21?',
+    voiceResponse: 'An invalid CIN means the company does not legally exist or has been deregistered. Any contract signed with such an entity is effectively void — you cannot enforce payment in court because there is no legal counterparty. Your only recourse would be a civil suit against the individual who signed, which requires identifying them personally. Stop all work immediately and do not share any deliverables until the company\'s legal status is verified.',
   },
 };
 
@@ -104,13 +113,269 @@ const STEP_CONFIG = [
 
 const STEP_DURATION = 1400;
 
+// ── Voice Demo ───────────────────────────────────────────────────────────────
+
+type VoiceStage = 1 | 2 | 3 | 4;
+
+function VoiceDemo({ question, response }: { question: string; response: string }) {
+  const [stage, setStage] = useState<VoiceStage>(1);
+  const [typedQ, setTypedQ] = useState('');
+  const [wordCount, setWordCount] = useState(0);
+  const [saved, setSaved] = useState(false);
+  const timersRef = useRef<ReturnType<typeof setTimeout>[]>([]);
+  const words = response.split(' ');
+
+  const clear = () => timersRef.current.forEach(clearTimeout);
+
+  const run = () => {
+    clear();
+    setStage(1);
+    setTypedQ('');
+    setWordCount(0);
+    setSaved(false);
+
+    const push = (fn: () => void, ms: number) => {
+      const t = setTimeout(fn, ms);
+      timersRef.current.push(t);
+    };
+
+    // Stage 2 — Listening
+    push(() => {
+      setStage(2);
+      let i = 0;
+      const iv = setInterval(() => {
+        i++;
+        setTypedQ(question.slice(0, i));
+        if (i >= question.length) clearInterval(iv);
+      }, 28);
+      timersRef.current.push(setTimeout(() => clearInterval(iv), question.length * 32 + 200));
+    }, 1500);
+
+    // Stage 3 — Processing
+    push(() => setStage(3), 5000);
+
+    // Stage 4 — Streaming response
+    push(() => {
+      setStage(4);
+      let w = 0;
+      const iv = setInterval(() => {
+        w++;
+        setWordCount(w);
+        if (w >= words.length) clearInterval(iv);
+      }, 80);
+      timersRef.current.push(setTimeout(() => clearInterval(iv), words.length * 85 + 200));
+    }, 7500);
+
+    // Restart
+    push(run, 20000);
+  };
+
+  useEffect(() => {
+    run();
+    return clear;
+  }, [question]);
+
+  const responseText = words.slice(0, wordCount).join(' ');
+  const complete = wordCount >= words.length;
+
+  return (
+    <div className="bg-card border border-border rounded-2xl overflow-hidden">
+      {/* Header */}
+      <div className="bg-primary px-6 py-5 flex items-center justify-between">
+        <div>
+          <div className="text-xs font-mono text-white/50 uppercase tracking-widest mb-1">Voice Analysis · WHISPER_TINY + VAD_SILERO</div>
+          <h3 className="font-display font-bold text-white text-lg">Ask VAKEEL by voice</h3>
+        </div>
+        <div className="flex items-center gap-1.5 text-xs font-mono text-white/60">
+          <span className="w-1.5 h-1.5 rounded-full bg-secondary animate-pulse inline-block" />
+          100% On-device
+        </div>
+      </div>
+
+      <div className="p-6 md:p-8">
+        <div className="flex flex-col items-center gap-6">
+
+          {/* Stage 1 — Idle */}
+          {stage === 1 && (
+            <motion.div
+              key="idle"
+              initial={{ opacity: 0, y: 8 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="flex flex-col items-center gap-4"
+            >
+              <div className="relative">
+                <motion.div
+                  animate={{ scale: [1, 1.5, 1], opacity: [0.4, 0, 0.4] }}
+                  transition={{ duration: 2, repeat: Infinity, ease: 'easeOut' }}
+                  className="absolute inset-0 rounded-full bg-primary/20"
+                />
+                <motion.div
+                  animate={{ scale: [1, 1.8, 1], opacity: [0.2, 0, 0.2] }}
+                  transition={{ duration: 2, repeat: Infinity, ease: 'easeOut', delay: 0.3 }}
+                  className="absolute inset-0 rounded-full bg-primary/10"
+                />
+                <button
+                  onClick={run}
+                  className="relative w-16 h-16 rounded-full bg-primary flex items-center justify-center shadow-lg hover:opacity-90 transition-opacity"
+                >
+                  <Mic className="w-7 h-7 text-secondary" />
+                </button>
+              </div>
+              <div className="text-center">
+                <p className="text-sm font-semibold text-foreground mb-1">Tap to ask a question</p>
+                <p className="text-xs font-mono text-muted-foreground">VAD_SILERO_5_1_2 — Listening for voice</p>
+              </div>
+            </motion.div>
+          )}
+
+          {/* Stage 2 — Listening */}
+          {stage === 2 && (
+            <motion.div
+              key="listening"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              className="w-full flex flex-col items-center gap-5"
+            >
+              <div className="flex flex-col items-center gap-3">
+                <button className="w-16 h-16 rounded-full bg-secondary flex items-center justify-center shadow-lg shadow-secondary/30">
+                  <Mic className="w-7 h-7 text-foreground" />
+                </button>
+                {/* Waveform */}
+                <div className="flex items-end gap-1 h-10">
+                  {[0, 0.15, 0.3, 0.45, 0.6, 0.45, 0.3, 0.15, 0].map((delay, i) => (
+                    <motion.div
+                      key={i}
+                      className="w-1.5 bg-primary rounded-full"
+                      animate={{ height: ['8px', `${16 + Math.sin(i) * 20 + 12}px`, '8px'] }}
+                      transition={{ duration: 0.9, repeat: Infinity, delay, ease: 'easeInOut' }}
+                    />
+                  ))}
+                </div>
+                <p className="text-xs font-semibold text-primary uppercase tracking-wider">Listening…</p>
+              </div>
+              <div className="w-full bg-muted/40 border border-border rounded-xl p-4">
+                <p className="text-sm text-foreground leading-relaxed">
+                  &ldquo;{typedQ}
+                  <motion.span
+                    animate={{ opacity: [1, 0] }}
+                    transition={{ duration: 0.6, repeat: Infinity }}
+                    className="inline-block w-0.5 h-4 bg-secondary ml-0.5 align-middle"
+                  />
+                  &rdquo;
+                </p>
+              </div>
+            </motion.div>
+          )}
+
+          {/* Stage 3 — Processing */}
+          {stage === 3 && (
+            <motion.div
+              key="processing"
+              initial={{ opacity: 0, y: 8 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="w-full flex flex-col gap-3"
+            >
+              <div className="w-full bg-muted/40 border border-border rounded-xl p-4 mb-1">
+                <p className="text-sm text-foreground/80">&ldquo;{question}&rdquo;</p>
+              </div>
+              {[
+                { label: 'WHISPER_TINY — Transcribed', done: true, active: false },
+                { label: 'LLAMA_3_2_1B_INST_Q4_0 — Reasoning…', done: false, active: true },
+                { label: 'Generating response', done: false, active: false },
+              ].map((step, i) => (
+                <div
+                  key={i}
+                  className={`flex items-center gap-3 px-4 py-3 rounded-xl border transition-all ${
+                    step.active ? 'bg-card border-secondary shadow-sm' :
+                    step.done ? 'bg-muted/30 border-border' :
+                    'border-transparent opacity-40'
+                  }`}
+                >
+                  <div className={`w-8 h-8 rounded-full flex items-center justify-center shrink-0 ${
+                    step.done ? 'bg-primary' : step.active ? 'bg-secondary/10' : 'border-2 border-border'
+                  }`}>
+                    {step.done && <Check className="w-4 h-4 text-white" />}
+                    {step.active && <Loader2 className="w-4 h-4 text-secondary animate-spin" />}
+                  </div>
+                  <span className={`text-sm font-medium ${step.active ? 'text-foreground' : step.done ? 'text-foreground' : 'text-muted-foreground'}`}>
+                    {step.label}
+                  </span>
+                </div>
+              ))}
+            </motion.div>
+          )}
+
+          {/* Stage 4 — Streaming response */}
+          {stage === 4 && (
+            <motion.div
+              key="response"
+              initial={{ opacity: 0, y: 8 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="w-full flex flex-col gap-4"
+            >
+              <div className="w-full bg-muted/40 border border-border rounded-xl p-3">
+                <p className="text-xs text-muted-foreground">&ldquo;{question}&rdquo;</p>
+              </div>
+              <div className="bg-primary rounded-2xl p-5 relative overflow-hidden">
+                <div className="absolute top-3 right-3 opacity-10">
+                  <MessageSquare className="w-16 h-16 text-secondary" />
+                </div>
+                <p className="text-white text-sm leading-relaxed relative z-10">
+                  {responseText}
+                  {!complete && (
+                    <motion.span
+                      animate={{ opacity: [1, 0] }}
+                      transition={{ duration: 0.5, repeat: Infinity }}
+                      className="inline-block w-0.5 h-4 bg-secondary ml-0.5 align-middle"
+                    />
+                  )}
+                </p>
+                {complete && (
+                  <motion.div
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    className="mt-4 pt-4 border-t border-white/10 flex flex-wrap gap-2"
+                  >
+                    <button
+                      onClick={() => setSaved(true)}
+                      className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-bold transition-colors ${
+                        saved ? 'bg-white/20 text-white' : 'bg-secondary text-foreground hover:opacity-90'
+                      }`}
+                    >
+                      <Save className="w-3.5 h-3.5" />
+                      {saved ? 'Saved to Vault' : 'Save to Vault'}
+                    </button>
+                    <button className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium bg-white/10 text-white hover:bg-white/20 transition-colors">
+                      <FileText className="w-3.5 h-3.5" /> Export PDF
+                    </button>
+                    <button className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium bg-white/10 text-white hover:bg-white/20 transition-colors">
+                      <MessageSquare className="w-3.5 h-3.5" /> Negotiate Script
+                    </button>
+                  </motion.div>
+                )}
+              </div>
+              <div className="text-center">
+                <span className="text-[10px] font-mono text-muted-foreground">
+                  WHISPER_TINY + LLAMA_3_2_1B_INST_Q4_0 · On-device · 1.2s
+                </span>
+              </div>
+            </motion.div>
+          )}
+
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ── Main Analyze page ────────────────────────────────────────────────────────
+
 export default function Analyze() {
   const { persona } = useParams();
   const demo = demos[persona as string] || demos['tax-loan'];
   const [step, setStep] = useState(0);
   const [done, setDone] = useState(false);
 
-  // Reset when persona changes
   useEffect(() => {
     setStep(0);
     setDone(false);
@@ -176,7 +441,7 @@ export default function Analyze() {
         <div className="p-6 md:p-8">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-10">
 
-            {/* ── Pipeline steps ── */}
+            {/* Pipeline steps */}
             <div>
               <h3 className="text-xs font-mono font-bold text-muted-foreground uppercase tracking-widest mb-5">
                 QVAC Processing Pipeline
@@ -186,8 +451,6 @@ export default function Analyze() {
                   const Icon = s.icon;
                   const isActive = step === idx;
                   const isPast = step > idx;
-                  const isFuture = step < idx;
-
                   return (
                     <div
                       key={s.id}
@@ -208,7 +471,6 @@ export default function Analyze() {
                           <Icon className={`w-4 h-4 ${isActive ? 'text-primary animate-pulse2' : 'text-muted-foreground'}`} />
                         )}
                       </div>
-
                       <div className="flex-1 min-w-0">
                         <div className={`text-sm font-semibold ${isPast || isActive ? 'text-foreground' : 'text-muted-foreground'}`}>
                           {s.label}
@@ -234,7 +496,7 @@ export default function Analyze() {
               </div>
             </div>
 
-            {/* ── Results ── */}
+            {/* Results */}
             <div>
               <AnimatePresence mode="wait">
                 {!done ? (
@@ -272,7 +534,6 @@ export default function Analyze() {
                     transition={{ duration: 0.45 }}
                     className="space-y-4"
                   >
-                    {/* Verdict card */}
                     <div className={`p-5 rounded-xl border ${
                       demo.risk === 'red' ? 'bg-risk-red/5 border-risk-red/20' :
                       demo.risk === 'amber' ? 'bg-risk-amber/5 border-risk-amber/20' :
@@ -292,7 +553,6 @@ export default function Analyze() {
                       </div>
                     </div>
 
-                    {/* Findings */}
                     <div>
                       <h4 className="text-xs font-mono font-bold text-muted-foreground uppercase tracking-widest mb-2.5">Key Findings</h4>
                       <ul className="space-y-2">
@@ -314,13 +574,27 @@ export default function Analyze() {
         </div>
       </div>
 
-      {/* Bottom panels — shown when done */}
+      {/* ── Voice Demo ── */}
+      <AnimatePresence>
+        {done && (
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.45, delay: 0.15 }}
+            className="mb-8"
+          >
+            <VoiceDemo question={demo.voiceQuestion} response={demo.voiceResponse} />
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* Bottom panels */}
       <AnimatePresence>
         {done && (
           <motion.div
             initial={{ opacity: 0, y: 16 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.4 }}
+            transition={{ duration: 0.4, delay: 0.25 }}
             className="grid grid-cols-1 md:grid-cols-3 gap-5"
           >
             {/* Deadlines */}
