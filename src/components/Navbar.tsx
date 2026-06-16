@@ -1,12 +1,14 @@
 import { useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { Menu, X, Wifi } from 'lucide-react';
+import { Menu, X, Wifi, ShieldCheck, MessageSquare } from 'lucide-react';
 import { VakeelLogo, VakeelWordmark } from './Logo';
 
 const navLinks = [
   { to: '/features', label: 'Features' },
   { to: '/how-it-works', label: 'How it Works' },
   { to: '/vault', label: 'My Vault' },
+  { to: '/verify', label: 'Verify', icon: ShieldCheck },
+  { to: '/chat', label: 'Ask VAKEEL', icon: MessageSquare },
 ];
 
 export default function Navbar() {
