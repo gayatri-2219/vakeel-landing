@@ -51,8 +51,8 @@ export default {
         },
       },
       fontFamily: {
-        sans: ['"Plus Jakarta Sans"', 'sans-serif'],
-        display: ['"Cabinet Grotesk"', 'sans-serif'],
+        sans: ['Inter', 'sans-serif'],
+        display: ['"Bricolage Grotesque"', 'sans-serif'],
         mono: ['"JetBrains Mono"', 'monospace'],
       },
       borderRadius: {
@@ -61,7 +61,7 @@ export default {
         sm: "calc(var(--radius) - 4px)",
       },
       boxShadow: {
-        'glow-primary': '0 0 40px -10px hsl(160 70% 14% / 0.3)',
+        'glow-primary': '0 0 40px -10px hsl(222 90% 9% / 0.35)',
         'glow-gold': '0 0 30px -8px hsl(35 45% 62% / 0.4)',
       },
       keyframes: {

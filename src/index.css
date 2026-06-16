@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=Cabinet+Grotesk:wght@400;500;700;800;900&family=Plus+Jakarta+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,400;12..96,500;12..96,700;12..96,800;12..96,900&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap');
 
 @tailwind base;
 @tailwind components;
@@ -7,33 +7,33 @@
 @layer base {
   :root {
     --background: 40 25% 97%;
-    --foreground: 220 45% 8%;
+    --foreground: 222 55% 7%;
 
     --card: 0 0% 100%;
-    --card-foreground: 220 45% 8%;
+    --card-foreground: 222 55% 7%;
 
     --popover: 0 0% 100%;
-    --popover-foreground: 220 45% 8%;
+    --popover-foreground: 222 55% 7%;
 
-    /* Deep navy — replaces legal green */
-    --primary: 218 72% 16%;
+    /* Midnight navy — deep and rich */
+    --primary: 222 90% 9%;
     --primary-foreground: 40 25% 97%;
 
-    --secondary: 35 45% 62%;
-    --secondary-foreground: 220 45% 8%;
+    --secondary: 35 50% 60%;
+    --secondary-foreground: 222 55% 7%;
 
-    --muted: 220 15% 93%;
-    --muted-foreground: 220 12% 46%;
+    --muted: 220 18% 92%;
+    --muted-foreground: 220 14% 44%;
 
-    --accent: 218 40% 92%;
-    --accent-foreground: 218 72% 16%;
+    --accent: 222 45% 91%;
+    --accent-foreground: 222 90% 9%;
 
     --destructive: 0 80% 55%;
     --destructive-foreground: 0 0% 100%;
 
-    --border: 220 13% 88%;
-    --input: 220 13% 88%;
-    --ring: 218 72% 16%;
+    --border: 220 15% 87%;
+    --input: 220 15% 87%;
+    --ring: 222 90% 9%;
 
     --radius: 0.5rem;
 
@@ -56,13 +56,14 @@
   body {
     background-color: hsl(var(--background));
     color: hsl(var(--foreground));
-    font-family: 'Plus Jakarta Sans', sans-serif;
+    font-family: 'Inter', sans-serif;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
   }
 
   h1, h2, h3, h4, h5, h6 {
-    font-family: 'Cabinet Grotesk', sans-serif;
+    font-family: 'Bricolage Grotesque', sans-serif;
+    letter-spacing: -0.02em;
   }
 }
 
@@ -71,25 +72,76 @@
     font-family: 'JetBrains Mono', monospace;
   }
 
+  /* ── Hero gradient — deep midnight navy ── */
   .hero-gradient {
-    background: linear-gradient(135deg, hsl(218 72% 12%) 0%, hsl(222 60% 20%) 50%, hsl(215 50% 10%) 100%);
+    background: linear-gradient(
+      135deg,
+      hsl(222 90% 7%) 0%,
+      hsl(224 70% 14%) 50%,
+      hsl(218 80% 6%) 100%
+    );
   }
 
-  .card-hover {
-    transition: all 0.2s cubic-bezier(0.19, 1, 0.22, 1);
+  /* ── Shine on primary buttons ── */
+  .btn-shine {
+    position: relative;
+    overflow: hidden;
   }
-  .card-hover:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 12px 40px -8px hsl(218 72% 16% / 0.15);
+  .btn-shine::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 60%;
+    height: 100%;
+    background: linear-gradient(
+      120deg,
+      transparent 0%,
+      rgba(255,255,255,0.22) 50%,
+      transparent 100%
+    );
+    transform: skewX(-20deg);
+    transition: left 0s;
+  }
+  .btn-shine:hover::after {
+    left: 160%;
+    transition: left 0.55s ease;
   }
 
+  /* ── Gold gradient text with animated shine ── */
   .text-gradient-gold {
-    background: linear-gradient(135deg, hsl(var(--secondary)) 0%, hsl(38 75% 55%) 100%);
+    position: relative;
+    display: inline-block;
+    background: linear-gradient(
+      105deg,
+      hsl(38 80% 62%) 0%,
+      hsl(35 50% 60%) 30%,
+      hsl(42 90% 70%) 55%,
+      hsl(35 50% 60%) 70%,
+      hsl(38 80% 62%) 100%
+    );
+    background-size: 200% auto;
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
     background-clip: text;
+    animation: gold-shine 4s linear infinite;
   }
 
+  @keyframes gold-shine {
+    0%   { background-position: 0% center; }
+    100% { background-position: 200% center; }
+  }
+
+  /* ── Card hover ── */
+  .card-hover {
+    transition: all 0.22s cubic-bezier(0.19, 1, 0.22, 1);
+  }
+  .card-hover:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 12px 40px -8px hsl(222 90% 9% / 0.18);
+  }
+
+  /* ── Noise texture overlay ── */
   .noise-texture {
     position: relative;
   }
@@ -97,9 +149,16 @@
     content: '';
     position: absolute;
     inset: 0;
-    opacity: 0.025;
+    opacity: 0.03;
     pointer-events: none;
     z-index: 0;
     background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  }
+
+  /* ── Frosted glass card ── */
+  .glass-card {
+    background: rgba(255,255,255,0.06);
+    backdrop-filter: blur(12px);
+    border: 1px solid rgba(255,255,255,0.12);
   }
 }

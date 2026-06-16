@@ -189,7 +189,7 @@ export default function Landing() {
               <motion.div {...fadeUp(0.24)} className="flex flex-col sm:flex-row items-start gap-4">
                 <Link
                   to="/analyze/tax-loan"
-                  className="group inline-flex items-center gap-2 px-8 py-4 bg-white text-foreground rounded-xl font-bold text-base hover:bg-white/95 transition-all shadow-lg shadow-black/20 hover:-translate-y-0.5"
+                  className="btn-shine group inline-flex items-center gap-2 px-8 py-4 bg-white text-foreground rounded-xl font-bold text-base hover:bg-white/95 transition-all shadow-lg shadow-black/20 hover:-translate-y-0.5"
                 >
                   Run Demo Scan
                   <ChevronRight className="w-4 h-4 transition-transform group-hover:translate-x-1" />
