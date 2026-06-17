@@ -267,6 +267,9 @@ export default function Vault() {
           className="flex flex-col md:flex-row md:items-start justify-between gap-6 mb-8"
         >
           <div>
+            <span className="inline-flex items-center gap-1.5 px-3 py-1 mb-3 rounded-full bg-primary/10 text-primary text-xs font-bold font-mono tracking-wide">
+              Sample Demo Vault — this is how your document vault will look like
+            </span>
             <h1 className="text-3xl font-display font-bold text-foreground mb-2">My Secure Vault</h1>
             <div className="flex items-center gap-2 text-sm text-muted-foreground">
               <Lock className="w-4 h-4" />

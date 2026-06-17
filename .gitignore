@@ -1,0 +1,23 @@
+# Dependencies
+node_modules/
+
+# Build output
+dist/
+
+# Env files
+.env
+.env.local
+.env.*.local
+
+# OS files
+.DS_Store
+.local/
+
+# Large binary files (DMG is served via symlink locally, not pushed to git)
+public/*.dmg
+public/*.exe
+
+# Replit config
+.replit
+replit.nix
+zipFile.zip
