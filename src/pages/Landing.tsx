@@ -200,7 +200,7 @@ export default function Landing() {
                     Download
                   </button>
                   <div className="absolute left-0 top-full mt-2 w-56 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 transform origin-top-left translate-y-2 group-hover:translate-y-0 bg-white border border-border/50 rounded-xl shadow-xl overflow-hidden z-50">
-                    <a href="https://github.com/gayatri-2219/vakeel-1/releases/latest/download/VAKEEL-1.0.0-arm64.dmg" download="VAKEEL-1.0.0-arm64.dmg" className="flex items-center gap-3 px-4 py-3 text-sm font-medium text-foreground hover:bg-muted transition-colors">
+                    <a href="https://github.com/gayatri-2219/vakeel-1/releases/tag/v1.0.0" target="_blank" rel="noopener noreferrer" className="flex items-center gap-3 px-4 py-3 text-sm font-medium text-foreground hover:bg-muted transition-colors">
                       <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 20.94c1.5 0 2.75 1.06 4 1.06 3 0 6-8 6-12.22A4.91 4.91 0 0 0 17 5c-2.22 0-4 1.44-5 1.44S8.22 5 6 5a5.22 5.22 0 0 0-5 5.18c0 4.22 3 12.22 6 12.22 1.25 0 2.5-1.06 4-1.06Z"/><path d="M10 2c1 .5 2 2 2 5"/></svg>
                       <span>Download for Mac</span>
                       <span className="ml-auto text-[10px] font-mono text-muted-foreground">Apple Silicon</span>
