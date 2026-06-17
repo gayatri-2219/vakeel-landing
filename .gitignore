@@ -21,3 +21,4 @@ public/*.exe
 .replit
 replit.nix
 zipFile.zip
+.vercel
